@@ -10,9 +10,17 @@ def separate_support_vectors(arr, sv_idx):
     non_support_vectors should be the remaining rows from arr.
     :return: two numpy arrays with the same number of columns as arr
     """
-    # TODO
-    support_vectors = None
-    non_support_vectors = None
+    if arr.ndim == 1:
+        arr = arr.reshape(-1, 1)
+    support_vectors = []
+    non_support_vectors = []
+    for index in range(arr.shape[0]):
+        if index in sv_idx:
+            support_vectors.append(arr[index])
+        else:   
+            non_support_vectors.append(arr[index])
+    support_vectors = np.asarray(support_vectors).reshape(-1, arr.shape[1])
+    non_support_vectors = np.asarray(non_support_vectors).reshape(-1, arr.shape[1])
 
     return support_vectors, non_support_vectors
 
@@ -30,10 +38,10 @@ class SupportVectorVisualization(Visualizer):
         :return: A numpy vector of x_2 values
         """
         # TODO: Calculate the slope of the decision boundary
-        slope = None
+        slope = coefficients[0]/coefficients[1]
 
         # TODO: Calculate the x2 values corresponding to the (x1, x2) points which lie on the decision boundary
-        x2_vals = None
+        x2_vals = -(coefficients[0] * x1_axis_points + intercept)/coefficients[1]
 
         return x2_vals
 
@@ -49,10 +57,11 @@ class SupportVectorVisualization(Visualizer):
 
         # TODO: Get the vertical distance from the hyperplane to the margin using
         # equation (16) from the handout
-        vertical_distance = None
+        slope = coefficients[0]/coefficients[1]
+        vertical_distance = np.sqrt(1 + slope**2)/np.linalg.norm(coefficients)
 
         # TODO: Calculate the margin points.
-        upper_margin_vals, lower_margin_vals = None
+        upper_margin_vals, lower_margin_vals = x2_vals + vertical_distance, x2_vals - vertical_distance
 
         return upper_margin_vals, lower_margin_vals
 
@@ -70,14 +79,14 @@ class SupportVectorVisualization(Visualizer):
         intercept = self.svm.intercept_.flatten()
 
         # TODO: Get the x2 and margin values
-        x2_vals= None
-        upper_margin_vals = None
-        lower_margin_vals = None
+        x2_vals= self.generate_x2_vals(x1_axis_points, coefficients, intercept)
+        upper_margin_vals = self.generate_margin_points(x2_vals, coefficients)[0]
+        lower_margin_vals = self.generate_margin_points(x2_vals, coefficients)[1]
 
         # TODO: Seperate the support vector points from the non support vector
         # points
-        support_vectors, non_support_vectors = None
-        support_vector_labels, non_support_vector_labels = None
+        support_vectors, non_support_vectors = separate_support_vectors(X, self.svm.support_)
+        support_vector_labels, non_support_vector_labels = separate_support_vectors(Y, self.svm.support_)
 
         # -------- DO NOT MODIFY ANYTHING BELOW THIS LINE --------
         ax.plot(x1_axis_points, x2_vals) # plots (x1, x2)

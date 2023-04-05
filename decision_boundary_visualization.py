@@ -23,8 +23,8 @@ def polar_kernel(X1, X2):
     :param X2: a numpy row vector, representing a single sample
     :return: a scalar value representing K(X1, X2)
     """
-    # TODO
-    pass
+
+    return np.inner(polar_embedding(X1), polar_embedding(X2))
 
 
 def polar_embedding(X):
@@ -34,8 +34,10 @@ def polar_embedding(X):
     :param X: a n_sample x n_features numpy matrix of samples. In part 1&2, X has 2 original features.
     :return: a n_sample x n_features + 1 matrix of samples with the additional feature appended on the right
     """
-    # TODO
-    pass
+    
+    new_col = np.linalg.norm(X, axis=1)**2
+    X = np.hstack((X, new_col.reshape(-1, 1)))
+    return X
 
 
 class SolutionVisualization(Visualizer):
@@ -60,7 +62,10 @@ class SolutionVisualization(Visualizer):
         intercept = self.svm.intercept_.flatten()
         
         # TODO: Calculate x2^2 + x1^2 points which lie on H(x) using the equation given in the handout
-        new_feature_points = None
+        w1 = coefficients[0]
+        w2 = coefficients[1]
+        w3 = coefficients[2]
+        new_feature_points = -(w1/w3)*gridpoints_x1 - (w2/w3)*gridpoints_x2 - intercept/w3
 
         return new_feature_points
 
@@ -74,10 +79,16 @@ class SolutionVisualization(Visualizer):
         :return: A scalar, the value of H(x_input)
         """
         # TODO: Compute K(X_i, x_input) for each training data point in X.
-        kernel_vals = None
+        kernel_vals = []
+        x_input = x_input.reshape(1, -1)
+        for p in X:
+            p = p.reshape(1, -1)
+            kernel_val = polar_kernel(p, x_input)
+            kernel_vals.append(kernel_val)
+        kernel_vals = np.asarray(kernel_vals).flatten()
 
         # TODO: Implement the equation for H
-        H = None
+        H = np.sum(dual_coefficients @ kernel_vals + intercept)
         return H
 
     def generate_H_points(
@@ -92,17 +103,21 @@ class SolutionVisualization(Visualizer):
         # Note: the dual coefficients are notated as alpha in the handout and the slides
         # Note: sklearn does not store dual coefficients of non support vectors
         # TODO: Get the dual coefficients and intercept from self.svm
-        dual_coefficients = np.zeros(len(X))
-        intercept = None
+        dual_coefficients = self.svm.dual_coef_.flatten()
+        intercept = self.svm.intercept_.flatten()
+
 
         # TODO: Get the value of H at each gridpoint
         # gridpoints here is a n_gridpoints x 2 matrix where each row is a (x_1, x_2) gridpoint
         gridpoints = np.c_[gridpoints_x1.ravel(), gridpoints_x2.ravel()]
 
         # Think about what you should be passing in as X to _H. Does H(x) always depend on all training points?
-        H = None
+        H = []
+        for point in gridpoints:
+            H_val = self._H(X[self.svm.support_], point, dual_coefficients, intercept)
+            H.append(H_val)
 
-        return H
+        return np.asarray(H).reshape(gridpoints_x1.shape)
 
     def visualize_H(
             self,

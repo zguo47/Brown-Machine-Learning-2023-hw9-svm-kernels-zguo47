@@ -59,12 +59,12 @@ def visualize_decision_boundary_embedded_space(
     # ------ DO NOT MODIFY ANYTHING ABOVE THIS LINE ------
 
     # TODO: Embed the data into the higher dimensional feature space
-    embedded_input_data = None
+    embedded_input_data = polar_embedding(X)
 
     # TODO: Train the svm ON THE EMBEDDED POINTS
-
+    SVM.fit(embedded_input_data, Y)
     # TODO: Get the new feature values
-    new_feature_values = None
+    new_feature_values = decision_boundary_visualization.generate_new_feature_values(gridpoints_x1, gridpoints_x2)
 
     # This will plot all the (x_1, x_2, x1^2+x2^2) points we've found
     # It will also plot the embedded feature data
@@ -144,10 +144,13 @@ def visualize_H(X, Y):
     # ------ DO NOT MODIFY ANYTHING ABOVE THIS LINE ------
 
     # TODO: Embed the data into the higher dimensional feature space
+    embedded_input_data = polar_embedding(X)
 
     # TODO: Train the linear kernel svm ON THE EMBEDDED POINTS
+    SVM_linear_kernel.fit(embedded_input_data, Y)
 
     # TODO: Train the polar kernel svm on the original data
+    SVM_polar_kernel.fit(X, Y)
 
     linear_H_visualization.visualize_H(
         X, gridpoints_x1, gridpoints_x2, plot_params=linear_plot_params)
@@ -176,16 +179,18 @@ def visualize_slack_penalty(X, Y):
     # TODO: Define a list of however many C values to train an SVM with.
     # We recommend making each C value a magnitude larger than the previous one
     # We also do not recommend having more than 6 C values
-    C_vals = []
+    C_vals = [0.5, 0.8, 1.0, 2.0, 5.0, 10.0]
 
     for c in C_vals:
         multi_title.append(f"c = {c}")
 
         # TODO: create and fit an SVM object with the built in rbf kernel from
         # sklearn and with the C parameter set to c
+        my_svm = svm.SVC(C=c, kernel='rbf')
+        my_svm.fit(X, Y)
 
         # TODO: get the predicted label of each gridpoint
-        predictions = None
+        predictions = my_svm.predict(gridpoints)
         solution_points.append(predictions)
 
     slack_plot_params = {
@@ -235,6 +240,7 @@ def visualize_support_vectors(X, Y):
         # ------ DO NOT MODIFY ANYTHING ABOVE THIS LINE ------
 
         # TODO: Train the svm
+        SVM.fit(X, Y)
 
         if should_plot:
             support_vector_visualization.visualize_solution(
@@ -242,14 +248,17 @@ def visualize_support_vectors(X, Y):
 
         # TODO: Seperate the support vectors and retrain the SVM on just the
         # support vectors
-        support_vectors, non_support_vectors = None
-        support_vector_labels, non_support_vector_labels = None
+        support_vectors, non_support_vectors = separate_support_vectors(X, SVM.support_)
+        support_vector_labels, non_support_vector_labels = separate_support_vectors(Y, SVM.support_)
+        SVM.fit(support_vectors, support_vector_labels)
 
         if should_plot:
             support_vector_visualization.visualize_solution(
                 support_vectors, support_vector_labels, x_axis_points, axes[1, plot_idx])
 
         # TODO: Remove the support vectors from X and Y
+        X = non_support_vectors
+        Y = non_support_vector_labels
 
     plt.show()
 
